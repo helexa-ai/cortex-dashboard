@@ -84,6 +84,7 @@ html[dir="rtl"] body {
     position: relative;
     width: 14px;
     height: 14px;
+    margin-right: 0.5em;
 }
 
 .neuron-heart-icon {
@@ -98,13 +99,13 @@ html[dir="rtl"] body {
 /* Outline heart: visible by default */
 .neuron-heart-icon.outline {
     opacity: 1;
-    transform: scale(0.8);
+    transform: scale(1.5);
 }
 
 /* Pulse heart: hidden by default */
 .neuron-heart-icon.pulse {
     opacity: 0;
-    transform: scale(1.2);
+    transform: scale(2);
 }
 
 /* When a recent heartbeat is present, fade pulse in and outline down */

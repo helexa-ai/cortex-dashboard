@@ -908,37 +908,9 @@ const Dashboard: React.FC = () => {
                         >
                           <div className="d-flex justify-content-between align-items-center">
                             <div className="fw-semibold">
-                              {label}
-                              {n.offline && (
-                                <span className="ms-2 badge text-bg-light text-danger">
-                                  offline
-                                </span>
-                              )}
-                            </div>
-                            <span className="badge text-bg-light text-muted">
-                              {backend}
-                            </span>
-                          </div>
-
-                          <div className="mt-1 text-muted">
-                            <div className="text-truncate">
-                              <span className="fw-light">node_id: </span>
-                              <code className="small">
-                                {descriptor.node_id ?? "null"}
-                              </code>
-                            </div>
-                            <div className="text-truncate">
-                              <span className="fw-light">health: </span>
-                              <span>{n.health}</span>
-                            </div>
-                            <div className="d-flex align-items-center text-truncate gap-1">
-                              <span className="fw-light">last heartbeat: </span>
-                              <span>
-                                {formatHeartbeatTimestamp(n.last_heartbeat_at)}
-                              </span>
                               <span
                                 className={
-                                  "ms-1 d-inline-flex align-items-center neuron-heartbeat-icon" +
+                                  "d-inline-flex align-items-center neuron-heartbeat-icon" +
                                   (isNeuronBeating(descriptor)
                                     ? " is-beating"
                                     : "")
@@ -957,12 +929,40 @@ const Dashboard: React.FC = () => {
                               >
                                 <FaRegHeart
                                   size={12}
-                                  className="neuron-heart-icon outline text-danger"
+                                  className="neuron-heart-icon outline text-danger me-1"
                                 />
                                 <FaHeartPulse
                                   size={12}
-                                  className="neuron-heart-icon pulse text-danger"
+                                  className="neuron-heart-icon pulse text-danger me-1"
                                 />
+                              </span>
+                              {label}
+                              {n.offline && (
+                                <span className="ms-2 badge text-bg-light text-danger">
+                                  offline
+                                </span>
+                              )}
+                            </div>
+                            <span className="badge text-bg-light text-muted">
+                              {backend}
+                            </span>
+                          </div>
+
+                          <div className="mt-1 text-muted">
+                            <div className="d-flex align-items-center text-truncate gap-1">
+                              <span className="fw-light">node_id: </span>
+                              <code className="small">
+                                {descriptor.node_id ?? "null"}
+                              </code>
+                            </div>
+                            <div className="text-truncate">
+                              <span className="fw-light">health: </span>
+                              <span>{n.health}</span>
+                            </div>
+                            <div className="text-truncate">
+                              <span className="fw-light">last heartbeat: </span>
+                              <span>
+                                {formatHeartbeatTimestamp(n.last_heartbeat_at)}
                               </span>
                             </div>
                           </div>
