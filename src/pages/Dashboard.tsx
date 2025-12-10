@@ -519,6 +519,7 @@ const Dashboard: React.FC = () => {
     lastReason: null,
     lastSeenAt: null,
   });
+  const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
 
   const wsRef = useRef<WebSocket | null>(null);
   const nextEventIdRef = useRef(1);
@@ -603,6 +604,7 @@ const Dashboard: React.FC = () => {
           clearPollingTimer();
           setConnectionStatus("open");
           setLastError(null);
+          setIsInitialLoading(true);
           // On a fresh connection, consider previous snapshot/events stale.
           setSnapshot(null);
           setEvents([]);
@@ -639,6 +641,7 @@ const Dashboard: React.FC = () => {
 
             if (data.kind === "snapshot") {
               setSnapshot(data.snapshot);
+              setIsInitialLoading(false);
               return;
             }
 
@@ -669,6 +672,7 @@ const Dashboard: React.FC = () => {
           }
 
           setConnectionStatus("error");
+          setIsInitialLoading(false);
           setLastError("WebSocket error (see browser console for details)");
         };
 
@@ -689,6 +693,7 @@ const Dashboard: React.FC = () => {
 
           // Whether this was a clean shutdown or an outage, we now treat the
           // endpoint as unreachable until a new connection succeeds.
+          setIsInitialLoading(false);
           scheduleReconnectPoll();
         };
       } catch (err) {
@@ -715,6 +720,7 @@ const Dashboard: React.FC = () => {
     // will change the status back to "connecting", which re-runs this effect
     // and triggers another attempt.
     if (connectionStatus === "connecting" && !wsRef.current) {
+      setIsInitialLoading(true);
       connect();
     }
 
@@ -765,7 +771,7 @@ const Dashboard: React.FC = () => {
                   every 60 seconds until it comes back online.
                 </div>
               )}
-              {lastError && (
+              {!isInitialLoading && lastError && (
                 <div className="small text-danger mt-1">{lastError}</div>
               )}
             </div>
@@ -803,7 +809,17 @@ const Dashboard: React.FC = () => {
                 </p>
               </div>
               <div className="card-body pt-2">
-                {!snapshot && (
+                {!snapshot && !lastError && (
+                  <div className="text-muted small d-flex align-items-center gap-2">
+                    <div
+                      className="spinner-border spinner-border-sm text-secondary"
+                      role="status"
+                      aria-hidden="true"
+                    />
+                    <span>Connecting to Cortex and waiting for snapshot…</span>
+                  </div>
+                )}
+                {!snapshot && lastError && (
                   <div className="text-muted small">Waiting for snapshot…</div>
                 )}
 
@@ -913,7 +929,17 @@ const Dashboard: React.FC = () => {
                   className="border rounded bg-body-tertiary"
                   style={{ maxHeight: "460px", overflowY: "auto" }}
                 >
-                  {events.length === 0 && (
+                  {isInitialLoading && (
+                    <div className="p-3 text-muted small d-flex align-items-center gap-2">
+                      <div
+                        className="spinner-border spinner-border-sm text-secondary"
+                        role="status"
+                        aria-hidden="true"
+                      />
+                      <span>Waiting for initial messages from Cortex…</span>
+                    </div>
+                  )}
+                  {!isInitialLoading && events.length === 0 && (
                     <div className="p-3 text-muted small">
                       No messages received yet. Check that your Cortex node is
                       running with <code>--dashboard-socket</code> and that the{" "}
