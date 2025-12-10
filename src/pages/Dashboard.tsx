@@ -579,12 +579,34 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     let cancelled = false;
 
+    // Debug: effect run
+    // eslint-disable-next-line no-console
+    console.debug(
+      "[Dashboard] useEffect run",
+      "endpoint=",
+      endpoint,
+      "connectionStatus=",
+      connectionStatus,
+      "wsRef.state=",
+      wsRef.current?.readyState,
+    );
+
     const connect = () => {
-      if (cancelled) return;
+      if (cancelled) {
+        // eslint-disable-next-line no-console
+        console.debug("[Dashboard] connect() aborted: effect cancelled");
+        return;
+      }
 
       const existing = wsRef.current;
       if (existing && existing.readyState !== WebSocket.CLOSED) {
         // There is already a live or in-progress socket; don't open another.
+        // eslint-disable-next-line no-console
+        console.debug(
+          "[Dashboard] connect() skipped: existing socket present",
+          "readyState=",
+          existing.readyState,
+        );
         return;
       }
 
@@ -592,6 +614,8 @@ const Dashboard: React.FC = () => {
         setLastError(null);
       }
 
+      // eslint-disable-next-line no-console
+      console.debug("[Dashboard] Opening WebSocket to", endpoint);
       setConnectionStatus("connecting");
 
       try {
@@ -599,7 +623,17 @@ const Dashboard: React.FC = () => {
         wsRef.current = ws;
 
         ws.onopen = () => {
-          if (cancelled) return;
+          // Ignore events from stale sockets that are no longer current.
+          if (wsRef.current !== ws) {
+            // eslint-disable-next-line no-console
+            console.debug(
+              "[Dashboard] WebSocket onopen from stale socket; ignoring",
+            );
+            return;
+          }
+
+          // eslint-disable-next-line no-console
+          console.debug("[Dashboard] WebSocket onopen (active socket)");
           clearPollingTimer();
           setConnectionStatus("open");
           setLastError(null);
@@ -614,10 +648,22 @@ const Dashboard: React.FC = () => {
         };
 
         ws.onmessage = (ev) => {
-          if (cancelled) return;
+          // Ignore events from stale sockets that are no longer current.
+          if (wsRef.current !== ws) {
+            // eslint-disable-next-line no-console
+            console.debug(
+              "[Dashboard] onmessage from stale socket; ignoring",
+              ev.data,
+            );
+            return;
+          }
+
           try {
             const wire = JSON.parse(ev.data as string) as ObserveMessage;
             const data = normalizeMessage(wire);
+
+            // eslint-disable-next-line no-console
+            console.debug("[Dashboard] onmessage", data);
 
             const receivedAt = formatTime(new Date());
             const id = nextEventIdRef.current++;
@@ -647,9 +693,15 @@ const Dashboard: React.FC = () => {
                 lastReason: e.reason ?? null,
                 lastSeenAt: now.toISOString(),
               });
+              // eslint-disable-next-line no-console
+              console.debug(
+                "[Dashboard] cortex_shutdown_notice received; scheduling reconnect poll",
+              );
               scheduleReconnectPoll();
             }
           } catch (err) {
+            // eslint-disable-next-line no-console
+            console.error("[Dashboard] onmessage parse error", err);
             setLastError(
               err instanceof Error
                 ? `Failed to parse message: ${err.message}`
@@ -658,14 +710,49 @@ const Dashboard: React.FC = () => {
           }
         };
 
-        ws.onerror = () => {
-          if (cancelled) return;
+        ws.onerror = (event) => {
+          // Ignore errors from stale sockets that are no longer current.
+          if (wsRef.current !== ws) {
+            // eslint-disable-next-line no-console
+            console.debug("[Dashboard] onerror from stale socket; ignoring");
+            return;
+          }
+
+          // eslint-disable-next-line no-console
+          console.error(
+            "[Dashboard] WebSocket onerror",
+            "readyState=",
+            ws.readyState,
+            event,
+          );
           setConnectionStatus("error");
           setLastError("WebSocket error (see browser console for details)");
         };
 
-        ws.onclose = () => {
-          if (cancelled) return;
+        ws.onclose = (event) => {
+          // Ignore closes from stale sockets that are no longer current.
+          if (wsRef.current !== ws) {
+            // eslint-disable-next-line no-console
+            console.debug(
+              "[Dashboard] onclose from stale socket; ignoring",
+              "code=",
+              event.code,
+              "reason=",
+              event.reason,
+            );
+            return;
+          }
+
+          // eslint-disable-next-line no-console
+          console.debug(
+            "[Dashboard] WebSocket onclose",
+            "code=",
+            event.code,
+            "reason=",
+            event.reason,
+            "wasClean=",
+            event.wasClean,
+          );
           // If we already transitioned to polling because of a shutdown
           // notice, don't override that state; otherwise mark as closed and
           // start polling.
@@ -681,7 +768,16 @@ const Dashboard: React.FC = () => {
           scheduleReconnectPoll();
         };
       } catch (err) {
-        if (cancelled) return;
+        if (cancelled) {
+          // eslint-disable-next-line no-console
+          console.debug(
+            "[Dashboard] connect() caught error after cancel; ignoring",
+            err,
+          );
+          return;
+        }
+        // eslint-disable-next-line no-console
+        console.error("[Dashboard] Failed to open WebSocket", err);
         setConnectionStatus("error");
         setLastError(
           err instanceof Error ? err.message : "Failed to open WebSocket",
@@ -695,13 +791,27 @@ const Dashboard: React.FC = () => {
     // will change the status back to "connecting", which re-runs this effect
     // and triggers another attempt.
     if (connectionStatus === "connecting" && !wsRef.current) {
+      // eslint-disable-next-line no-console
+      console.debug(
+        "[Dashboard] effect: connectionStatus=connecting and no wsRef; calling connect()",
+      );
       connect();
+    } else {
+      // eslint-disable-next-line no-console
+      console.debug(
+        "[Dashboard] effect: not connecting or wsRef already set; skipping connect()",
+      );
     }
 
     return () => {
       cancelled = true;
+      // eslint-disable-next-line no-console
+      console.debug(
+        "[Dashboard] effect cleanup; clearing polling timer (but not closing socket)",
+      );
       clearPollingTimer();
-      closeSocket();
+      // Intentionally do not call closeSocket() here to avoid closing a
+      // healthy connection during React StrictMode double-invocation.
     };
     // We intentionally *do not* depend on `scheduleReconnectPoll` here to
     // avoid reconnect loops when polling flips the status back to "connecting".
