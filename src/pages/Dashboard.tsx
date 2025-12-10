@@ -218,12 +218,8 @@ const normalizeModelId = (id: ModelId): NormalizedModelId => {
   return JSON.stringify(id);
 };
 
-const renderModelId = (id: ModelId | undefined | null): string => {
-  if (!id) return "";
-  if (typeof id === "string") return id;
-  const v = (id as any)["0"];
-  return typeof v === "string" ? v : "";
-};
+// Normalised model IDs are represented as plain strings throughout the UI,
+// so we no longer need a helper that inspects the underlying wire shape.
 
 /**
  * Normalize provisioning commands coming from cortex:
@@ -676,7 +672,7 @@ const Dashboard: React.FC = () => {
           setLastError("WebSocket error (see browser console for details)");
         };
 
-        ws.onclose = (event) => {
+        ws.onclose = () => {
           // Ignore closes from stale sockets that are no longer current.
           if (wsRef.current !== ws) {
             return;
