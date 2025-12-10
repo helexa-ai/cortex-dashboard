@@ -647,7 +647,30 @@ const Dashboard: React.FC = () => {
 
             const e = data.event;
 
-            if (e.type === "cortex_shutdown_notice") {
+            if (e.type === "neuron_heartbeat") {
+              // Update last_heartbeat_at in the normalized snapshot for this neuron.
+              setSnapshot((prev) => {
+                if (!prev) return prev;
+                const neuronId = e.neuron_id;
+                const nowIso = new Date().toISOString();
+
+                const updatedNeurons = prev.neurons.map((n) => {
+                  if (
+                    n.descriptor &&
+                    (n.descriptor.node_id === neuronId ||
+                      n.descriptor.label === neuronId)
+                  ) {
+                    return {
+                      ...n,
+                      last_heartbeat_at: nowIso,
+                    };
+                  }
+                  return n;
+                });
+
+                return { ...prev, neurons: updatedNeurons };
+              });
+            } else if (e.type === "cortex_shutdown_notice") {
               const now = new Date();
               setShutdownState({
                 seenShutdownNotice: true,
