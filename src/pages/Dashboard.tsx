@@ -6,7 +6,6 @@ import React, {
   useState,
 } from "react";
 import { getCortexWsEndpoint } from "../config";
-
 import { FaHeartPulse, FaRegHeart } from "react-icons/fa6";
 
 /**
@@ -523,7 +522,6 @@ const Dashboard: React.FC = () => {
   });
   const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
 
-  // Track a transient heartbeat animation per neuron, keyed by node_id/label.
   const [heartbeatAnimIds, setHeartbeatAnimIds] = useState<
     Record<string, number>
   >({});
@@ -678,20 +676,23 @@ const Dashboard: React.FC = () => {
                 return { ...prev, neurons: updatedNeurons };
               });
 
-              // Trigger a short heartbeat animation for this neuron by bumping its pulse id.
+              // Trigger a heartbeat animation for this neuron by bumping its pulse id.
               const neuronKey = e.neuron_id;
               setHeartbeatAnimIds((prev) => {
                 const nextId = (prev[neuronKey] ?? 0) + 1;
                 const updated = { ...prev, [neuronKey]: nextId };
 
-                // Clear the animation flag shortly after so the icon returns to outline.
+                // Let the CSS transition handle a smooth fade in/out while the
+                // beating flag is set. Clear it after a few seconds unless a
+                // newer heartbeat has arrived.
+                const totalMs = 4000;
                 window.setTimeout(() => {
                   setHeartbeatAnimIds((current) => {
                     if (current[neuronKey] !== nextId) return current;
                     const { [neuronKey]: _, ...rest } = current;
                     return rest;
                   });
-                }, 700);
+                }, totalMs);
 
                 return updated;
               });
@@ -935,21 +936,33 @@ const Dashboard: React.FC = () => {
                               <span>
                                 {formatHeartbeatTimestamp(n.last_heartbeat_at)}
                               </span>
-                              <span className="ms-1 d-inline-flex align-items-center">
-                                {isNeuronBeating(descriptor) ? (
-                                  <FaHeartPulse
-                                    size={12}
-                                    className="text-danger"
-                                    aria-label="recent heartbeat"
-                                    title="Recent heartbeat"
-                                  />
-                                ) : (
-                                  <FaRegHeart
-                                    size={12}
-                                    className="text-danger"
-                                    aria-hidden="true"
-                                  />
-                                )}
+                              <span
+                                className={
+                                  "ms-1 d-inline-flex align-items-center neuron-heartbeat-icon" +
+                                  (isNeuronBeating(descriptor)
+                                    ? " is-beating"
+                                    : "")
+                                }
+                                aria-hidden={!isNeuronBeating(descriptor)}
+                                aria-label={
+                                  isNeuronBeating(descriptor)
+                                    ? "recent heartbeat"
+                                    : undefined
+                                }
+                                title={
+                                  isNeuronBeating(descriptor)
+                                    ? "Recent heartbeat"
+                                    : undefined
+                                }
+                              >
+                                <FaRegHeart
+                                  size={12}
+                                  className="neuron-heart-icon outline text-danger"
+                                />
+                                <FaHeartPulse
+                                  size={12}
+                                  className="neuron-heart-icon pulse text-danger"
+                                />
                               </span>
                             </div>
                           </div>
