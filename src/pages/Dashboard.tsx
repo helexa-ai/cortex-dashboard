@@ -176,8 +176,11 @@ const formatTime = (d: Date): string =>
  * Compute a human-readable relative duration (e.g. "9 seconds ago")
  * from a heartbeat timestamp stored as { secs_since_epoch, ... } or
  * as a string/other JSON-serialisable value.
+ *
+ * `nowMs` should be the current wall-clock time in milliseconds; we keep it
+ * external so a single ticking state can drive all rows.
  */
-const formatHeartbeatRelative = (value: unknown): string => {
+const formatHeartbeatRelative = (value: unknown, nowMs: number): string => {
   if (value == null) return "no heartbeat yet";
 
   let heartbeatMs: number | null = null;
@@ -206,7 +209,6 @@ const formatHeartbeatRelative = (value: unknown): string => {
     return "heartbeat time unavailable";
   }
 
-  const nowMs = Date.now();
   const deltaMs = Math.max(0, nowMs - heartbeatMs);
   const deltaSec = Math.floor(deltaMs / 1000);
 
@@ -532,6 +534,11 @@ const Dashboard: React.FC = () => {
   const [snapshot, setSnapshot] = useState<ObserveSnapshot | null>(null);
   const [events, setEvents] = useState<EventLogItem[]>([]);
   const [autoScroll, setAutoScroll] = useState(true);
+
+  // Tick used to refresh relative heartbeat labels (e.g. "9 seconds ago")
+  const [heartbeatNowTick, setHeartbeatNowTick] = useState<number>(() =>
+    Date.now(),
+  );
   const [shutdownState, setShutdownState] = useState<ShutdownState>({
     seenShutdownNotice: false,
     lastReason: null,
@@ -555,6 +562,20 @@ const Dashboard: React.FC = () => {
     if (!logEndRef.current) return;
     logEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [events, autoScroll]);
+
+  /* ---------------------- Heartbeat relative time tick --------------------- */
+
+  useEffect(() => {
+    // Refresh relative heartbeat labels periodically so "N seconds ago" stays
+    // roughly in sync even without new heartbeat events.
+    const intervalId = window.setInterval(() => {
+      setHeartbeatNowTick(Date.now());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, []);
 
   /* -------------------------- Polling (reconnect) -------------------------- */
 
@@ -708,7 +729,7 @@ const Dashboard: React.FC = () => {
                 // Let the CSS transition handle a smooth fade in/out while the
                 // beating flag is set. Clear it after a few seconds unless a
                 // newer heartbeat has arrived.
-                const totalMs = 500;
+                const totalMs = 1000;
                 window.setTimeout(() => {
                   setHeartbeatAnimIds((current) => {
                     if (current[neuronKey] !== nextId) return current;
@@ -985,7 +1006,10 @@ const Dashboard: React.FC = () => {
                             <div className="text-truncate">
                               <span className="fw-light">last heartbeat: </span>
                               <span>
-                                {formatHeartbeatRelative(n.last_heartbeat_at)}
+                                {formatHeartbeatRelative(
+                                  n.last_heartbeat_at,
+                                  heartbeatNowTick,
+                                )}
                               </span>
                             </div>
                           </div>
