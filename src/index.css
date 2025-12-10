@@ -91,20 +91,20 @@ html[dir="rtl"] body {
     top: 0;
     left: 0;
     transition:
-        opacity 2s ease-in-out,
-        transform 1.5s ease-in-out;
+        opacity 0.5s ease-in-out,
+        transform 1s ease-in-out;
 }
 
 /* Outline heart: visible by default */
 .neuron-heart-icon.outline {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(0.8);
 }
 
 /* Pulse heart: hidden by default */
 .neuron-heart-icon.pulse {
     opacity: 0;
-    transform: scale(0.8);
+    transform: scale(1.2);
 }
 
 /* When a recent heartbeat is present, fade pulse in and outline down */

@@ -685,7 +685,7 @@ const Dashboard: React.FC = () => {
                 // Let the CSS transition handle a smooth fade in/out while the
                 // beating flag is set. Clear it after a few seconds unless a
                 // newer heartbeat has arrived.
-                const totalMs = 4000;
+                const totalMs = 500;
                 window.setTimeout(() => {
                   setHeartbeatAnimIds((current) => {
                     if (current[neuronKey] !== nextId) return current;
