@@ -196,7 +196,15 @@ const formatHeartbeatTimestamp = (value: unknown): string => {
       if (Number.isNaN(d.getTime())) {
         return "heartbeat time unavailable";
       }
-      return d.toISOString();
+      // Use local time instead of UTC ISO string
+      return d.toLocaleString(undefined, {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
     } catch {
       return "heartbeat time unavailable";
     }
@@ -657,7 +665,9 @@ const Dashboard: React.FC = () => {
               setSnapshot((prev) => {
                 if (!prev) return prev;
                 const neuronId = e.neuron_id;
-                const nowIso = new Date().toISOString();
+
+                // Store as secs_since_epoch so our formatter always renders in local time.
+                const nowSecs = Math.floor(Date.now() / 1000);
 
                 const updatedNeurons = prev.neurons.map((n) => {
                   if (
@@ -667,7 +677,10 @@ const Dashboard: React.FC = () => {
                   ) {
                     return {
                       ...n,
-                      last_heartbeat_at: nowIso,
+                      last_heartbeat_at: {
+                        secs_since_epoch: nowSecs,
+                        nanos_since_epoch: 0,
+                      },
                     };
                   }
                   return n;
@@ -938,17 +951,17 @@ const Dashboard: React.FC = () => {
                               </span>
                               {label}
                               {n.offline && (
-                                <span className="ms-2 badge text-bg-light text-danger">
+                                <span className="ms-2 badge text-bg-light text-muted">
                                   offline
                                 </span>
                               )}
                             </div>
-                            <span className="badge text-bg-light text-muted">
+                            <span className="badge text-bg-light text-secondary">
                               {backend}
                             </span>
                           </div>
 
-                          <div className="mt-1 text-muted">
+                          <div className="mt-1 text-secondary">
                             <div className="d-flex align-items-center text-truncate gap-1">
                               <span className="fw-light">node_id: </span>
                               <code className="small">
@@ -978,10 +991,10 @@ const Dashboard: React.FC = () => {
                                     <code className="me-1">
                                       {m.model_id || "model"}
                                     </code>
-                                    <span className="badge text-bg-light text-muted me-1">
+                                    <span className="badge text-bg-light text-secondary me-1">
                                       {m.effective_status}
                                     </span>
-                                    <span className="text-muted">
+                                    <span className="text-secondary">
                                       last cmd: {m.last_cmd_kind}
                                     </span>
                                   </li>
