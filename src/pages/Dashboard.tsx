@@ -872,7 +872,7 @@ const Dashboard: React.FC = () => {
         {/* Snapshot / Neuron list */}
         <div className="col-12 col-lg-5">
           <section className="h-100">
-            <div className="card shadow-sm border-0 h-100">
+            <div className="card shadow-sm border-0 h-100 neurons-card">
               <div className="card-header bg-transparent border-0 pb-0">
                 <h2 className="h6 mb-1">Neurons snapshot</h2>
                 <p className="small text-muted mb-2">
@@ -1015,7 +1015,7 @@ const Dashboard: React.FC = () => {
         {/* Event log */}
         <div className="col-12 col-lg-7">
           <section className="h-100 d-flex flex-column">
-            <div className="card shadow-sm border-0 flex-fill">
+            <div className="card shadow-sm border-0 flex-fill events-card">
               <div className="card-header bg-transparent border-0 pb-0">
                 <h2 className="h6 mb-1">Event stream</h2>
                 <p className="small text-muted mb-2">
@@ -1025,7 +1025,7 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="card-body pt-2">
                 <div
-                  className="border rounded bg-body-tertiary"
+                  className="border rounded bg-body-tertiary events-log"
                   style={{ maxHeight: "460px", overflowY: "auto" }}
                 >
                   {isInitialLoading && (

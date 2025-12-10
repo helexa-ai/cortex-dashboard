@@ -40,10 +40,11 @@ body {
 :root[data-theme="dark"] {
     --color-bg: #000618;
     --color-bg-elevated: #020617;
-    --color-bg-subtle: #020617;
-    --color-border-subtle: rgba(148, 163, 184, 0.24);
-    --color-text: #e2e8f0;
-    --color-text-muted: #cbd5f5;
+    --color-bg-subtle: #020814; /* slightly deeper than elevated for contrast */
+    --color-border-subtle: rgba(148, 163, 184, 0.32);
+    --color-text: #e5edf7;
+    /* Muted but clearly readable on dark backgrounds */
+    --color-text-muted: #c7d2ff;
     --color-accent: #22d3ee;
     --color-accent-soft: rgba(34, 211, 238, 0.18);
     --color-navbar-bg: rgba(2, 6, 23, 0.92);
@@ -77,6 +78,88 @@ body {
 /* Basic RTL reset: when the root document is RTL, ensure logical direction */
 html[dir="rtl"] body {
     direction: rtl;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Theme-aware overrides for Bootstrap utilities used in dashboard UI         */
+/* -------------------------------------------------------------------------- */
+
+/* Ensure muted text follows our theme palette */
+.text-muted,
+.text-body-secondary {
+    color: var(--color-text-muted) !important;
+}
+
+/* Default text should follow our main text color */
+.text-body {
+    color: var(--color-text) !important;
+}
+
+/* Badges: use subtle/elevated backgrounds and theme text colors */
+.badge.text-bg-light {
+    background-color: var(--color-bg-subtle) !important;
+    color: var(--color-text) !important;
+    border: 1px solid var(--color-border-subtle) !important;
+}
+
+.badge.text-bg-secondary {
+    background-color: rgba(148, 163, 184, 0.24) !important;
+    color: var(--color-text) !important;
+    border: 1px solid var(--color-border-subtle) !important;
+}
+
+/* Borders in list items and log entries should respect theme border color */
+.list-group-item,
+.border-bottom {
+    border-color: var(--color-border-subtle) !important;
+}
+
+/* Form labels (e.g. Auto-scroll events) */
+.form-check-label {
+    color: var(--color-text-muted);
+}
+
+:root[data-theme="dark"] .form-check-label {
+    color: var(--color-text) !important;
+}
+
+/* Dashboard section headings (e.g. Connection) */
+.app-main .card .fw-semibold {
+    color: var(--color-text) !important;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Theme-aware overrides for Bootstrap utilities used in dashboard UI         */
+/* -------------------------------------------------------------------------- */
+
+/* Ensure muted text follows our theme palette */
+.text-muted,
+.text-body-secondary {
+    color: var(--color-text-muted) !important;
+}
+
+/* Default text should follow our main text color */
+.text-body {
+    color: var(--color-text) !important;
+}
+
+/* Badges: use subtle/elevated backgrounds and theme text colors */
+.badge.text-bg-light {
+    background-color: var(--color-bg-subtle) !important;
+    color: var(--color-text) !important;
+    border: 1px solid var(--color-border-subtle) !important;
+}
+
+.badge.text-bg-secondary {
+    background-color: rgba(148, 163, 184, 0.24) !important;
+    color: var(--color-text) !important;
+    border: 1px solid var(--color-border-subtle) !important;
+}
+
+/* Borders in list items and log entries should respect theme border color */
+.list-group-item,
+.border-bottom {
+    border-color: var(--color-border-subtle) !important;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -150,6 +233,46 @@ html[dir="rtl"] body {
 .neuron-heartbeat-icon.is-beating .neuron-heart-icon.pulse {
     opacity: 1;
     transform: scale(1.1);
+}
+
+/* -------------------------------------------------------------------------- */
+/* Dashboard panel theming (neurons + events)                                 */
+/* -------------------------------------------------------------------------- */
+
+/* Neuron snapshot panel */
+.app-main .neurons-card {
+    background-color: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-subtle);
+    color: var(--color-text);
+}
+
+/* Neuron list items */
+.app-main .neurons-card .list-group-item {
+    background-color: transparent;
+    border-color: var(--color-border-subtle);
+    color: var(--color-text);
+}
+
+.app-main .neurons-card .list-group-item small,
+.app-main .neurons-card .list-group-item .fw-light {
+    color: var(--color-text-muted);
+}
+
+/* Event stream panel */
+.app-main .events-card {
+    background-color: var(--color-bg-elevated);
+    border: 1px solid var(--color-border-subtle);
+    color: var(--color-text);
+}
+
+.app-main .events-card .events-log {
+    background-color: var(--color-bg-subtle);
+    border-color: var(--color-border-subtle);
+}
+
+/* JSON payload text */
+.app-main .events-card pre {
+    color: var(--color-text);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -369,6 +492,21 @@ html[dir="rtl"] .diricon-mirror-rtl {
 
 .app-main {
     max-width: 1120px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Bootstrap background variable overrides for theme-aware panels             */
+/* -------------------------------------------------------------------------- */
+
+/* List group background (neuron list) */
+.list-group {
+    --bs-list-group-bg: var(--color-bg-elevated);
+}
+
+/* Tertiary background (event stream container, subtle panels) */
+.bg-body-tertiary {
+    --bs-bg-opacity: 1;
+    background-color: var(--color-bg-subtle) !important;
 }
 
 /* -------------------------------------------------------------------------- */
