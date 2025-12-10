@@ -7,6 +7,8 @@ import React, {
 } from "react";
 import { getCortexWsEndpoint } from "../config";
 
+import { FaHeartPulse, FaRegHeart } from "react-icons/fa6";
+
 /**
  * Types and helpers for the Cortex dashboard websocket.
  *
@@ -521,6 +523,11 @@ const Dashboard: React.FC = () => {
   });
   const [isInitialLoading, setIsInitialLoading] = useState<boolean>(true);
 
+  // Track a transient heartbeat animation per neuron, keyed by node_id/label.
+  const [heartbeatAnimIds, setHeartbeatAnimIds] = useState<
+    Record<string, number>
+  >({});
+
   const wsRef = useRef<WebSocket | null>(null);
   const nextEventIdRef = useRef(1);
   const logEndRef = useRef<HTMLDivElement | null>(null);
@@ -670,6 +677,24 @@ const Dashboard: React.FC = () => {
 
                 return { ...prev, neurons: updatedNeurons };
               });
+
+              // Trigger a short heartbeat animation for this neuron by bumping its pulse id.
+              const neuronKey = e.neuron_id;
+              setHeartbeatAnimIds((prev) => {
+                const nextId = (prev[neuronKey] ?? 0) + 1;
+                const updated = { ...prev, [neuronKey]: nextId };
+
+                // Clear the animation flag shortly after so the icon returns to outline.
+                window.setTimeout(() => {
+                  setHeartbeatAnimIds((current) => {
+                    if (current[neuronKey] !== nextId) return current;
+                    const { [neuronKey]: _, ...rest } = current;
+                    return rest;
+                  });
+                }, 700);
+
+                return updated;
+              });
             } else if (e.type === "cortex_shutdown_notice") {
               const now = new Date();
               setShutdownState({
@@ -763,6 +788,15 @@ const Dashboard: React.FC = () => {
   const statusVariant = statusBadgeVariant(connectionStatus);
 
   const neurons = snapshot?.neurons ?? [];
+
+  const isNeuronBeating = (
+    descriptor: NeuronDescriptor | undefined | null,
+  ): boolean => {
+    if (!descriptor) return false;
+    const neuronId = descriptor.node_id ?? descriptor.label;
+    if (!neuronId) return false;
+    return Boolean(heartbeatAnimIds[neuronId]);
+  };
 
   return (
     <main className="app-main container py-4">
@@ -896,10 +930,26 @@ const Dashboard: React.FC = () => {
                               <span className="fw-light">health: </span>
                               <span>{n.health}</span>
                             </div>
-                            <div className="text-truncate">
+                            <div className="d-flex align-items-center text-truncate gap-1">
                               <span className="fw-light">last heartbeat: </span>
                               <span>
                                 {formatHeartbeatTimestamp(n.last_heartbeat_at)}
+                              </span>
+                              <span className="ms-1 d-inline-flex align-items-center">
+                                {isNeuronBeating(descriptor) ? (
+                                  <FaHeartPulse
+                                    size={12}
+                                    className="text-danger"
+                                    aria-label="recent heartbeat"
+                                    title="Recent heartbeat"
+                                  />
+                                ) : (
+                                  <FaRegHeart
+                                    size={12}
+                                    className="text-danger"
+                                    aria-hidden="true"
+                                  />
+                                )}
                               </span>
                             </div>
                           </div>
