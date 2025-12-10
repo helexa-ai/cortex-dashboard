@@ -929,11 +929,11 @@ const Dashboard: React.FC = () => {
                               >
                                 <FaRegHeart
                                   size={12}
-                                  className="neuron-heart-icon outline text-danger me-1"
+                                  className={`neuron-heart-icon outline text-${n.offline ? "muted" : "danger"} me-1`}
                                 />
                                 <FaHeartPulse
                                   size={12}
-                                  className="neuron-heart-icon pulse text-danger me-1"
+                                  className={`neuron-heart-icon pulse text-${n.offline ? "muted" : "danger"} me-1`}
                                 />
                               </span>
                               {label}
