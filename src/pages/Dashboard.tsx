@@ -171,13 +171,16 @@ const formatTime = (d: Date): string =>
  *   { secs_since_epoch: number, nanos_since_epoch: number }
  * or as plain ISO strings. This helper turns either into a readable string.
  */
-const formatHeartbeatTimestamp = (value: unknown): string => {
+
+/**
+ * Compute a human-readable relative duration (e.g. "9 seconds ago")
+ * from a heartbeat timestamp stored as { secs_since_epoch, ... } or
+ * as a string/other JSON-serialisable value.
+ */
+const formatHeartbeatRelative = (value: unknown): string => {
   if (value == null) return "no heartbeat yet";
 
-  if (typeof value === "string") {
-    if (!value.trim()) return "no heartbeat yet";
-    return value;
-  }
+  let heartbeatMs: number | null = null;
 
   if (
     typeof value === "object" &&
@@ -188,34 +191,40 @@ const formatHeartbeatTimestamp = (value: unknown): string => {
     const secs =
       typeof v.secs_since_epoch === "number" ? v.secs_since_epoch : NaN;
     if (!Number.isFinite(secs)) {
-      return "heartbeat time unavailable";
+      heartbeatMs = null;
+    } else {
+      heartbeatMs = secs * 1000;
     }
-    try {
-      const ms = secs * 1000;
-      const d = new Date(ms);
-      if (Number.isNaN(d.getTime())) {
-        return "heartbeat time unavailable";
-      }
-      // Use local time instead of UTC ISO string
-      return d.toLocaleString(undefined, {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      });
-    } catch {
-      return "heartbeat time unavailable";
-    }
+  } else if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return "no heartbeat yet";
+    const parsed = Date.parse(trimmed);
+    heartbeatMs = Number.isNaN(parsed) ? null : parsed;
   }
 
-  // Fallback: avoid rendering raw objects as React children.
-  try {
-    return JSON.stringify(value);
-  } catch {
+  if (heartbeatMs == null) {
     return "heartbeat time unavailable";
   }
+
+  const nowMs = Date.now();
+  const deltaMs = Math.max(0, nowMs - heartbeatMs);
+  const deltaSec = Math.floor(deltaMs / 1000);
+
+  if (deltaSec < 1) return "just now";
+  if (deltaSec === 1) return "1 second ago";
+  if (deltaSec < 60) return `${deltaSec} seconds ago`;
+
+  const deltaMin = Math.floor(deltaSec / 60);
+  if (deltaMin === 1) return "1 minute ago";
+  if (deltaMin < 60) return `${deltaMin} minutes ago`;
+
+  const deltaHr = Math.floor(deltaMin / 60);
+  if (deltaHr === 1) return "1 hour ago";
+  if (deltaHr < 24) return `${deltaHr} hours ago`;
+
+  const deltaDay = Math.floor(deltaHr / 24);
+  if (deltaDay === 1) return "1 day ago";
+  return `${deltaDay} days ago`;
 };
 
 const normalizeModelId = (id: ModelId): NormalizedModelId => {
@@ -666,7 +675,8 @@ const Dashboard: React.FC = () => {
                 if (!prev) return prev;
                 const neuronId = e.neuron_id;
 
-                // Store as secs_since_epoch so our formatter always renders in local time.
+                // Store as secs_since_epoch so our formatter always renders in local time
+                // and we can compute relative "seconds ago" values.
                 const nowSecs = Math.floor(Date.now() / 1000);
 
                 const updatedNeurons = prev.neurons.map((n) => {
@@ -975,7 +985,7 @@ const Dashboard: React.FC = () => {
                             <div className="text-truncate">
                               <span className="fw-light">last heartbeat: </span>
                               <span>
-                                {formatHeartbeatTimestamp(n.last_heartbeat_at)}
+                                {formatHeartbeatRelative(n.last_heartbeat_at)}
                               </span>
                             </div>
                           </div>
