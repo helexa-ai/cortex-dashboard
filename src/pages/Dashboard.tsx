@@ -301,7 +301,13 @@ const normalizeSnapshot = (snapshot: ObserveSnapshot): NormalizedSnapshot => {
   const normalized: NormalizedNeuron[] = neuronsWire.map(
     (n: any, idx: number) => {
       if (n && typeof n === "object" && "descriptor" in n) {
-        const descriptor = (n as any).descriptor as NeuronDescriptor;
+        const d = (n as any).descriptor || {};
+        const descriptor: NeuronDescriptor = {
+          node_id: d.node_id ?? null,
+          hostname: d.hostname ?? (n as any).hostname ?? null,
+          label: d.label ?? null,
+          metadata: d.metadata ?? {},
+        };
         return {
           descriptor,
           last_heartbeat_at: (n as any).last_heartbeat_at ?? null,
@@ -937,9 +943,14 @@ const Dashboard: React.FC = () => {
                   <div className="list-group small">
                     {neurons.map((n: NormalizedNeuron, idx: number) => {
                       const descriptor = n.descriptor;
+                      // prioritization: custom label > hostname > node_id
                       const label =
-                        descriptor.label ??
+                        (descriptor.label &&
+                        descriptor.label !== descriptor.node_id
+                          ? descriptor.label
+                          : null) ??
                         descriptor.hostname ??
+                        descriptor.label ??
                         descriptor.node_id ??
                         `Neuron #${idx + 1}`;
                       const backend =
