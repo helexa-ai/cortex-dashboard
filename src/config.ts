@@ -89,7 +89,7 @@ function getGlobalRuntimeConfig(): CortexRuntimeConfigGlobal {
  * are expected to override this via `public/config.js`.
  */
 const DEFAULT_CONFIG: CortexRuntimeConfig = {
-  cortex_ws_endpoint: "ws://127.0.0.1:8090/observe",
+  cortex_ws_endpoint: "ws://10.6.0.46:9304/observe",
 };
 
 /**

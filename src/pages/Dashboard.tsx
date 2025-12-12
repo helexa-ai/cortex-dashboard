@@ -32,6 +32,7 @@ export type ModelProvisioningStatus = {
 
 export type NeuronDescriptor = {
   node_id: string | null;
+  hostname: string | null;
   label: string | null;
   metadata: any;
 };
@@ -319,6 +320,7 @@ const normalizeSnapshot = (snapshot: ObserveSnapshot): NormalizedSnapshot => {
 
       const descriptor: NeuronDescriptor = {
         node_id: (n && (n as any).node_id) ?? null,
+        hostname: (n && (n as any).hostname) ?? null,
         label:
           (n && (n as any).label) ??
           (n && (n as any).node_id) ??
@@ -937,6 +939,7 @@ const Dashboard: React.FC = () => {
                       const descriptor = n.descriptor;
                       const label =
                         descriptor.label ??
+                        descriptor.hostname ??
                         descriptor.node_id ??
                         `Neuron #${idx + 1}`;
                       const backend =

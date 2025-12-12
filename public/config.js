@@ -41,5 +41,5 @@ window.__CORTEX_CONFIG__ = {
    * - Use "ws://" for plain HTTP deployments.
    * - Use "wss://" when the dashboard is served over HTTPS.
    */
-  cortex_ws_endpoint: "ws://127.0.0.1:8090/observe",
+  cortex_ws_endpoint: "ws://10.6.0.46:9304/observe",
 };
